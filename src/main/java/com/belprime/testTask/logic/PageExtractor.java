@@ -27,23 +27,23 @@ public final class PageExtractor {
             String preparedUrl = SEARCHING_MACHINE + URLEncoder.encode(request, CHARSET);
             final Document document = Jsoup.connect(preparedUrl +
                     "&start=0&num=" + (LINKS_QUANTITY * 2)).userAgent(USER_AGENT).get();
+//                                     LINKS_QUANTITY * 2 - for guaranteed map filling
             Elements links = document.select(".g>.r>a");
             for (Element link : links) {
-                if (map.size() == LINKS_QUANTITY) break;
                 String url = link.absUrl("href");
                 url = URLDecoder.decode(url.substring(url.indexOf('=') + 1, url.indexOf('&')), CHARSET);
-                if (!url.startsWith(PROTOCOL_NAME)) {
-                    continue;
-                }
-//url.contains(IGNORED_SITE) below - check url to avoid the "http error fetching URL. Status=999",
-// which "LinkedIn.com"-like site generates because of User-Agent and proxy.
+                if (!url.startsWith(PROTOCOL_NAME)) continue;
+//                  url.contains(IGNORED_SITE) below - check url to avoid the "http error fetching URL. Status=999",
+//                  which "LinkedIn.com"-like site generates because of User-Agent and proxy.
                 if (url.contains(IGNORED_SITE)) {
                     System.err.println("http error status=999: URL " + url + " ignored.");
                     continue;
                 }
                 final String title = Jsoup.connect(url).get().title();
-                if (title.isEmpty()) continue;//if we don't need empty titles
+                if (title.isEmpty())
+                    continue;// if we don't require to store an empty titles
                 map.put(url, title);
+                if (map.size() == LINKS_QUANTITY) break;
             }
         } catch (IOException e) {
             e.printStackTrace();
