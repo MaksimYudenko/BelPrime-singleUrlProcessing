@@ -1,4 +1,4 @@
-package com.belprime.testTask.util;
+package com.belprime.testTask.logic;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -8,37 +8,37 @@ import org.jsoup.select.Elements;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-public class PageExtractor {
+import static com.belprime.testTask.util.Constants.*;
 
-    private static final String SEARCHING_MACHINE = "HTTP://www.google.com/search?q=";
-    private static final String CHARSET = "UTF-8";
-    private static final String PROTOCOL_NAME = "http";
-    private static final String USER_AGENT = "Mozilla/5.0(compatible;MSIE 10.0;Windows NT 6; SV1)";
-    //    private static final String USER_AGENT = "ExampleBot 1.0 (+HTTP://belprime.com/bot)";
-    private static final Integer LINKS_QUANTITY = 10;
-    private final Map<String, String> map = new ConcurrentHashMap<>();
+public final class PageExtractor {
+
     private final String request;
 
     public PageExtractor(String request) {
         this.request = request;
     }
 
-    private void getItems() {
+    private Map<String, String> getElements() {
+        final Map<String, String> map = new LinkedHashMap<>();
         try {
             String preparedUrl = SEARCHING_MACHINE + URLEncoder.encode(request, CHARSET);
             final Document document = Jsoup.connect(preparedUrl +
-                    "&start=0&num=" + (LINKS_QUANTITY + 3)).userAgent(USER_AGENT).get();
+                    "&start=0&num=" + (LINKS_QUANTITY * 2)).userAgent(USER_AGENT).get();
             Elements links = document.select(".g>.r>a");
             for (Element link : links) {
                 if (map.size() == LINKS_QUANTITY) break;
                 String url = link.absUrl("href");
                 url = URLDecoder.decode(url.substring(url.indexOf('=') + 1, url.indexOf('&')), CHARSET);
-//url.contains("linkedin") - to check url to avoid the "http error fetching URL. Status=999",
-// which throws LinkedIn.com because of User-Agent and proxy.
-                if (!url.startsWith(PROTOCOL_NAME) | url.contains("linkedin")) {
+                if (!url.startsWith(PROTOCOL_NAME)) {
+                    continue;
+                }
+//url.contains(IGNORED_SITE) below - check url to avoid the "http error fetching URL. Status=999",
+// which "LinkedIn.com"-like site generates because of User-Agent and proxy.
+                if (url.contains(IGNORED_SITE)) {
+                    System.err.println("http error status=999: URL " + url + " ignored.");
                     continue;
                 }
                 final String title = Jsoup.connect(url).get().title();
@@ -48,10 +48,11 @@ public class PageExtractor {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return map;
     }
 
     public void printMap() {
-        getItems();
+        Map<String, String> map = getElements();
         for (Map.Entry<String, String> entry : map.entrySet()) {
             System.out.println("URL " + entry.getKey() + " TITLE " + entry.getValue());
         }

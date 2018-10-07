@@ -1,10 +1,12 @@
 package com.belprime.testTask;
 
-import com.belprime.testTask.util.PageExtractor;
+import com.belprime.testTask.logic.PageExtractor;
 
 public class Main {
 
     public static void main(String[] args) {
+
+
 //        PageExtractor.getItems(args[0]);
 //        PageExtractor.getItems("java");
 //        PageExtractor.getItems("google");
