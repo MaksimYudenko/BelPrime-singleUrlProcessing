@@ -13,11 +13,11 @@ public class Main {
 //        PageExtractor.getItems("home");
 //        PageExtractor.getItems("точное время Минск");
 //        PageExtractor.getItems("belprime");
-//        new PageExtractor("java").printMap();
-//        new PageExtractor("google").printMap();
-//        new PageExtractor("IT").printMap();
-//        new PageExtractor("точное время Минск").printMap();
-        new PageExtractor("belprime").printMap();
+//        new PageExtractor("java").displayItems();
+//        new PageExtractor("google").displayItems();
+//        new PageExtractor("IT").displayItems();
+//        new PageExtractor("точное время Минск").displayItems();
+        new PageExtractor("belprime").displayItems();
 
     }
 
