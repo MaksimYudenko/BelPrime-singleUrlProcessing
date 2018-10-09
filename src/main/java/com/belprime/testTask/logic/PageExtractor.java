@@ -6,6 +6,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.LinkedHashMap;
@@ -32,15 +33,16 @@ public final class PageExtractor {
         return map;
     }
 
-    public Elements getSearchList() throws IOException {
+    Elements getSearchList() throws IOException {
         String preparedUrl = SEARCHING_MACHINE + URLEncoder.encode(request, CHARSET);
         final Document document = Jsoup.connect(preparedUrl +
-                "&start=0&num=" + (LINKS_QUANTITY * 2)).userAgent(USER_AGENT).get();
-//                                 LINKS_QUANTITY * 2 - for guaranteed map filling
+                "&start=0&num=" + (LINKS_QUANTITY + 5)).userAgent(USER_AGENT)
+                .ignoreHttpErrors(true).get();
+//                                 LINKS_QUANTITY + 5 - for guaranteed map filling
         return document.select(".g>.r>a");
     }
 
-    public static Map<String, String> getItems(Elements links) throws IOException {
+    private static Map<String, String> getItems(Elements links) throws IOException {
         final Map<String, String> map = new LinkedHashMap<>();
         for (Element link : links) {
             String url = link.absUrl("href");
@@ -52,7 +54,8 @@ public final class PageExtractor {
                 System.err.println("http error: status 999 > ignored URL " + url);
                 continue;
             }
-            final String title = Jsoup.connect(url).get().title();
+            final String title = Jsoup.connect(url).userAgent(USER_AGENT)
+                    .ignoreHttpErrors(true).get().title();
 //          if we don't require to store an empty titles >
             if (title.isEmpty()) continue;
             map.put(url, title);
@@ -61,7 +64,7 @@ public final class PageExtractor {
         return map;
     }
 
-    public static String getUrl(Element link) throws IOException {
+    static String getUrl(Element link) throws UnsupportedEncodingException {
         String url = link.absUrl("href");
         url = URLDecoder.decode(url.substring(url.indexOf('=') + 1, url.indexOf('&')), CHARSET);
         if (!url.startsWith(PROTOCOL_NAME) & url.contains(IGNORED_SITE)) {
@@ -73,14 +76,7 @@ public final class PageExtractor {
     public void displayItems() {
         Map<String, String> map = extractElements();
         for (Map.Entry<String, String> entry : map.entrySet()) {
-            System.out.println("URL\t" + entry.getKey() + "\tTITLE <" + entry.getValue() + ">");
-        }
-    }
-
-    public void displayItems(Map<String, String> m) {
-        m = extractElements();
-        for (Map.Entry<String, String> entry : m.entrySet()) {
-            System.out.println("URL\t" + entry.getKey() + "\tTITLE <" + entry.getValue() + ">");
+            System.out.printf("URL %s \tTITLE %s\n", entry.getKey(), entry.getValue());
         }
     }
 

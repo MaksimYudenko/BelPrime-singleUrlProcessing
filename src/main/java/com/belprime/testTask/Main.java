@@ -1,12 +1,12 @@
 package com.belprime.testTask;
 
-import com.belprime.testTask.logic.PageExtractor;
+import com.belprime.testTask.logic.WebSearchService;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class ConsoleRunner {
+public class Main {
 
     public static void main(String[] args) {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -19,9 +19,8 @@ public class ConsoleRunner {
         }
         assert msgLine != null;
         String[] messages = msgLine.split("\\s*(\\s{2,}|,|!|\\.)\\s*");
-        for (String message : messages) {
-            new PageExtractor(message).displayItems();
-        }
+
+        new Thread(new WebSearchService(messages)).start();
     }
 
 }

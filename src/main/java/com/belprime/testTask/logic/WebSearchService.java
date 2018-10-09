@@ -1,6 +1,5 @@
-package com.belprime.testTask;
+package com.belprime.testTask.logic;
 
-import com.belprime.testTask.logic.PageExtractor;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -12,14 +11,16 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-import static com.belprime.testTask.util.Constants.IGNORED_SITE;
-import static com.belprime.testTask.util.Constants.PROTOCOL_NAME;
+import static com.belprime.testTask.util.Constants.*;
 
-public class ApplicationRunner {
-//    PageExtractor pageExtractor = new PageExtractor("belprime");
+public class WebSearchService implements Runnable {
 
-    public static void main(String[] args) {
-     /*   ExecutorService consumers = new ThreadPoolExecutor(
+    private String[] messages;
+
+//    public static void main(String[] args) {
+
+
+        /*   ExecutorService consumers = new ThreadPoolExecutor(
         1, 4, 5, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>(10));*/
 //        ExecutorService consumers = Executors.newFixedThreadPool(4);
@@ -30,20 +31,21 @@ public class ApplicationRunner {
         producers.submit(produce);
         producers.shutdown();
 */
-       /* Scanner sc = new Scanner(System.in);
-        String message = sc.next();*/
-        String message = "belprime";
-        BlockingQueue<Elements> queue = new ArrayBlockingQueue<>(10);
-        Map<String, String> map = new ConcurrentHashMap<>();
-        Producer p = new Producer(queue, message);
-//        Producer p1 = new Producer(queue, "google");
-        Consumer c = new Consumer(queue, map);
-//        Consumer c1 = new Consumer(queue, map);
 
-        new Thread(p).start();
-//        new Thread(p1).start();
-        new Thread(c).start();
-//        new Thread(c1).start();
+    public WebSearchService(String[] messages) {
+        this.messages = messages;
+    }
+
+    @Override
+    public void run() {
+        BlockingQueue<Elements> queue = new ArrayBlockingQueue<>(BQ_CAPACITY);
+        Map<String, String> map = new ConcurrentHashMap<>();
+        for (String message : messages) {
+            Producer producer = new Producer(queue, message);
+            Consumer consumer = new Consumer(queue, map);
+            new Thread(producer).start();
+            new Thread(consumer).start();
+        }
     }
 }
 
@@ -61,13 +63,10 @@ class Producer implements Runnable {
     public void run() {
         PageExtractor pe = new PageExtractor(message);
         try {
-//            Thread.sleep(100);
-//            queue.wait();
             queue.put(pe.getSearchList());
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
-//        queue.notifyAll();
     }
 
 }
@@ -85,23 +84,25 @@ class Consumer implements Runnable {
     @Override
     public void run() {
         try {
-            Elements elements = queue.poll(1000, TimeUnit.MILLISECONDS);
+            Elements elements = queue.poll(POLL_TIMEOUT, TimeUnit.SECONDS);
             assert elements != null;
             for (Element link : elements) {
                 String url = PageExtractor.getUrl(link);
                 if (!url.startsWith(PROTOCOL_NAME)) continue;
-                if (url.contains(IGNORED_SITE)) {
+            /*    if (url.contains(IGNORED_SITE)) {
                     System.err.println("http error: status 999 > ignored URL " + url);
                     continue;
-                }
+                }*/
 
-                final String title = Jsoup.connect(url).get().title();
+                final String title = Jsoup.connect(url).userAgent(USER_AGENT)
+                        .ignoreHttpErrors(true).validateTLSCertificates(false).get().title();
                 if (title.isEmpty()) continue;
                 System.out.printf("URL %s \tTITLE %s\n", url, title);
                 map.put(url, title);
             }
-        } catch (IOException | InterruptedException e) {
+        } catch (NullPointerException | IOException | InterruptedException e) {
             e.printStackTrace();
         }
     }
+
 }
