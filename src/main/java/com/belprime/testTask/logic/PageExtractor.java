@@ -10,41 +10,15 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 
 import static com.belprime.testTask.util.Constants.*;
 
-public final class PageExtractor implements Runnable {
-    private CountDownLatch latch;
-    private final String request;
+public final class PageExtractor {
 
+    private final String request;
 
     public PageExtractor(String request) {
         this.request = request;
-    }
-
-    public PageExtractor(String request, CountDownLatch cdl) {
-        this.request = request;
-        latch = cdl;
-        new Thread(this);
-    }
-
-    public void run() {
-        try {
-            for (int i = 0; i < CDL; i++) {
-                System.out.println("получение элементов");
-                extractElements();
-                System.out.println("элементы получены");
-                latch.countDown();
-                System.out.println("latch.countDown() and sleep 100 ms");
-                Thread.sleep(100);
-                System.out.println("after sleep100, " + latch.toString());
-                System.out.println("displayItems()");
-                displayItems();
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
     private Map<String, String> extractElements() {
@@ -66,7 +40,7 @@ public final class PageExtractor implements Runnable {
         return document.select(".g>.r>a");
     }
 
-    public Map<String, String> getItems(Elements links) throws IOException {
+    public static Map<String, String> getItems(Elements links) throws IOException {
         final Map<String, String> map = new LinkedHashMap<>();
         for (Element link : links) {
             String url = link.absUrl("href");
@@ -87,9 +61,25 @@ public final class PageExtractor implements Runnable {
         return map;
     }
 
+    public static String getUrl(Element link) throws IOException {
+        String url = link.absUrl("href");
+        url = URLDecoder.decode(url.substring(url.indexOf('=') + 1, url.indexOf('&')), CHARSET);
+        if (!url.startsWith(PROTOCOL_NAME) & url.contains(IGNORED_SITE)) {
+            url = "";
+        }
+        return url;
+    }
+
     public void displayItems() {
         Map<String, String> map = extractElements();
         for (Map.Entry<String, String> entry : map.entrySet()) {
+            System.out.println("URL\t" + entry.getKey() + "\tTITLE <" + entry.getValue() + ">");
+        }
+    }
+
+    public void displayItems(Map<String, String> m) {
+        m = extractElements();
+        for (Map.Entry<String, String> entry : m.entrySet()) {
             System.out.println("URL\t" + entry.getKey() + "\tTITLE <" + entry.getValue() + ">");
         }
     }
