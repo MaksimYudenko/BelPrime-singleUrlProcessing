@@ -11,6 +11,7 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.belprime.testTask.util.Constants.*;
 
@@ -48,7 +49,6 @@ public final class PageExtractor {
         return url;
     }
 
-
     static String getTitle(String url) {
         String title = "";
         try {
@@ -75,14 +75,7 @@ public final class PageExtractor {
         return map;
     }
 
-    public void displayItems() {
-        Map<String, String> map = null;
-        try {
-            map = getItems(getSearchList());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        assert map != null;
+    public static void displayItems(ConcurrentHashMap<String, String> map) {
         for (Map.Entry<String, String> entry : map.entrySet()) {
             System.out.printf("URL %s \tTITLE %s\n", entry.getKey(), entry.getValue());
         }

@@ -1,3 +1,4 @@
+/*
 package com.belprime.testTask.logic;
 
 import org.jsoup.nodes.Element;
@@ -5,9 +6,9 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import static com.belprime.testTask.util.Constants.BQ_CAPACITY;
@@ -23,7 +24,7 @@ public class WebSearchService implements Runnable {
 
     @Override
     public void run() {
-        BlockingQueue<Elements> queue = new ArrayBlockingQueue<>(BQ_CAPACITY);
+        BlockingQueue<Elements> queue = new LinkedBlockingQueue<>(BQ_CAPACITY);
         Map<String, String> map = new ConcurrentHashMap<>();
         for (String message : messages) {
             Producer producer = new Producer(queue, message);
@@ -84,4 +85,4 @@ class Consumer implements Runnable {
         }
     }
 
-}
+}*/
