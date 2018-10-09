@@ -1,6 +1,5 @@
 package com.belprime.testTask.logic;
 
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
@@ -11,26 +10,12 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-import static com.belprime.testTask.util.Constants.*;
+import static com.belprime.testTask.util.Constants.BQ_CAPACITY;
+import static com.belprime.testTask.util.Constants.POLL_TIMEOUT;
 
 public class WebSearchService implements Runnable {
 
     private String[] messages;
-
-//    public static void main(String[] args) {
-
-
-        /*   ExecutorService consumers = new ThreadPoolExecutor(
-        1, 4, 5, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<Runnable>(10));*/
-//        ExecutorService consumers = Executors.newFixedThreadPool(4);
-//        ExecutorService producers = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-
-/*
-        Runnable produce = new Produce(consumers);
-        producers.submit(produce);
-        producers.shutdown();
-*/
 
     public WebSearchService(String[] messages) {
         this.messages = messages;
@@ -87,20 +72,14 @@ class Consumer implements Runnable {
             Elements elements = queue.poll(POLL_TIMEOUT, TimeUnit.SECONDS);
             assert elements != null;
             for (Element link : elements) {
-                String url = PageExtractor.getUrl(link);
-                if (!url.startsWith(PROTOCOL_NAME)) continue;
-            /*    if (url.contains(IGNORED_SITE)) {
-                    System.err.println("http error: status 999 > ignored URL " + url);
-                    continue;
-                }*/
-
-                final String title = Jsoup.connect(url).userAgent(USER_AGENT)
-                        .ignoreHttpErrors(true).validateTLSCertificates(false).get().title();
+                final String url = PageExtractor.getUrl(link);
+                if (url.isEmpty()) continue;
+                final String title = PageExtractor.getTitle(url);
                 if (title.isEmpty()) continue;
                 System.out.printf("URL %s \tTITLE %s\n", url, title);
                 map.put(url, title);
             }
-        } catch (NullPointerException | IOException | InterruptedException e) {
+        } catch (NullPointerException | InterruptedException e) {
             e.printStackTrace();
         }
     }

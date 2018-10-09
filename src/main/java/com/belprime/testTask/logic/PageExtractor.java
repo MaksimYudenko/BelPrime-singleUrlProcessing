@@ -22,40 +22,51 @@ public final class PageExtractor {
         this.request = request;
     }
 
-    private Map<String, String> extractElements() {
-        Map<String, String> map = null;
-        try {
-            Elements links = getSearchList();
-            map = getItems(links);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return map;
-    }
-
     Elements getSearchList() throws IOException {
         String preparedUrl = SEARCHING_MACHINE + URLEncoder.encode(request, CHARSET);
         final Document document = Jsoup.connect(preparedUrl +
                 "&start=0&num=" + (LINKS_QUANTITY + 5)).userAgent(USER_AGENT)
-                .ignoreHttpErrors(true).get();
+                .ignoreHttpErrors(true).validateTLSCertificates(false).get();
 //                                 LINKS_QUANTITY + 5 - for guaranteed map filling
         return document.select(".g>.r>a");
     }
 
-    private static Map<String, String> getItems(Elements links) throws IOException {
+    static String getUrl(Element link) {
+        String url = link.absUrl("href");
+        try {
+            url = URLDecoder.decode(url.substring(url.indexOf('=') + 1, url.indexOf('&')), CHARSET);
+            if (!url.startsWith(PROTOCOL_NAME))
+                url = "";
+           /* if (url.contains(IGNORED_SITE)) {
+                System.err.println("http error: status 999 > ignored URL " + url);
+                url = "";
+            }*/
+        } catch (UnsupportedEncodingException e) {
+            System.err.println("getUrl() error:");
+            e.printStackTrace();
+        }
+        return url;
+    }
+
+
+    static String getTitle(String url) {
+        String title = "";
+        try {
+            title = Jsoup.connect(url).userAgent(USER_AGENT)
+                    .ignoreHttpErrors(true).validateTLSCertificates(false).get().title();
+        } catch (IOException e) {
+            System.err.println("getTitle() error:");
+            e.printStackTrace();
+        }
+        return title;
+    }
+
+    private static Map<String, String> getItems(Elements links) {
         final Map<String, String> map = new LinkedHashMap<>();
         for (Element link : links) {
-            String url = link.absUrl("href");
-            url = URLDecoder.decode(url.substring(url.indexOf('=') + 1, url.indexOf('&')), CHARSET);
-            if (!url.startsWith(PROTOCOL_NAME)) continue;
-//               url.contains(IGNORED_SITE) below - to avoid the "http error fetching URL. Status=999",
-//               which LinkedIn-like site generates because of User-Agent and proxy.
-            if (url.contains(IGNORED_SITE)) {
-                System.err.println("http error: status 999 > ignored URL " + url);
-                continue;
-            }
-            final String title = Jsoup.connect(url).userAgent(USER_AGENT)
-                    .ignoreHttpErrors(true).get().title();
+            final String url = getUrl(link);
+            if (url.isEmpty()) continue;
+            final String title = getTitle(url);
 //          if we don't require to store an empty titles >
             if (title.isEmpty()) continue;
             map.put(url, title);
@@ -64,17 +75,14 @@ public final class PageExtractor {
         return map;
     }
 
-    static String getUrl(Element link) throws UnsupportedEncodingException {
-        String url = link.absUrl("href");
-        url = URLDecoder.decode(url.substring(url.indexOf('=') + 1, url.indexOf('&')), CHARSET);
-        if (!url.startsWith(PROTOCOL_NAME) & url.contains(IGNORED_SITE)) {
-            url = "";
-        }
-        return url;
-    }
-
     public void displayItems() {
-        Map<String, String> map = extractElements();
+        Map<String, String> map = null;
+        try {
+            map = getItems(getSearchList());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        assert map != null;
         for (Map.Entry<String, String> entry : map.entrySet()) {
             System.out.printf("URL %s \tTITLE %s\n", entry.getKey(), entry.getValue());
         }
