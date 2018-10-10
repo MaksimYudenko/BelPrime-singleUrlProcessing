@@ -1,22 +1,16 @@
-/*
 package com.belprime.testTask.logic;
 
-import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
-import static com.belprime.testTask.util.Constants.BQ_CAPACITY;
-import static com.belprime.testTask.util.Constants.POLL_TIMEOUT;
+import static com.belprime.testTask.util.Constants.*;
 
 public class WebSearchService implements Runnable {
 
     private String[] messages;
+    static volatile boolean isRunning = true;
 
     public WebSearchService(String[] messages) {
         this.messages = messages;
@@ -25,31 +19,44 @@ public class WebSearchService implements Runnable {
     @Override
     public void run() {
         BlockingQueue<Elements> queue = new LinkedBlockingQueue<>(BQ_CAPACITY);
-        Map<String, String> map = new ConcurrentHashMap<>();
-        for (String message : messages) {
-            Producer producer = new Producer(queue, message);
-            Consumer consumer = new Consumer(queue, map);
-            new Thread(producer).start();
-            new Thread(consumer).start();
+        ConcurrentHashMap<String, String> map = new ConcurrentHashMap<>();
+        Producer producer = new Producer(queue, messages);
+        Consumer consumer = new Consumer(queue, map);
+        ExecutorService executorService = Executors.newFixedThreadPool(
+                Runtime.getRuntime().availableProcessors());
+
+        new Thread(producer).start();
+//
+        for (String message : messages) executorService.execute(consumer);
+        while (true) {
+            if (!isRunning) break;
         }
+        executorService.shutdown();
+        try {
+            executorService.awaitTermination(AWAIT_TERMINATION, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        PageExtractor.displayItems(map);
     }
 }
 
 class Producer implements Runnable {
 
     private BlockingQueue<Elements> queue;
-    private String message;
+    private String[] messages;
 
-    Producer(BlockingQueue<Elements> queue, String message) {
+    Producer(BlockingQueue<Elements> queue, String[] messages) {
         this.queue = queue;
-        this.message = message;
+        this.messages = messages;
     }
 
     @Override
     public void run() {
-        PageExtractor pe = new PageExtractor(message);
         try {
-            queue.put(pe.getSearchList());
+            for (String message : messages)
+                queue.put(new PageExtractor(message).getSearchList());
+            queue.put(new Elements());
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
@@ -60,9 +67,9 @@ class Producer implements Runnable {
 class Consumer implements Runnable {
 
     private BlockingQueue<Elements> queue;
-    private Map<String, String> map;
+    private ConcurrentHashMap<String, String> map;
 
-    Consumer(BlockingQueue<Elements> queue, Map<String, String> map) {
+    Consumer(BlockingQueue<Elements> queue, ConcurrentHashMap<String, String> map) {
         this.queue = queue;
         this.map = map;
     }
@@ -70,19 +77,17 @@ class Consumer implements Runnable {
     @Override
     public void run() {
         try {
-            Elements elements = queue.poll(POLL_TIMEOUT, TimeUnit.SECONDS);
-            assert elements != null;
-            for (Element link : elements) {
-                final String url = PageExtractor.getUrl(link);
-                if (url.isEmpty()) continue;
-                final String title = PageExtractor.getTitle(url);
-                if (title.isEmpty()) continue;
-                System.out.printf("URL %s \tTITLE %s\n", url, title);
-                map.put(url, title);
+            while (WebSearchService.isRunning) {
+                Elements elements = queue.poll(POLL_TIMEOUT, TimeUnit.SECONDS);
+                assert elements != null;
+                final ConcurrentHashMap<String, String> items = PageExtractor.getItems(elements);
+                if (elements.equals(new Elements()))
+                    WebSearchService.isRunning = false;
+                map.putAll(items);
             }
         } catch (NullPointerException | InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-}*/
+}

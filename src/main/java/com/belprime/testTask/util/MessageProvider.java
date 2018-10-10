@@ -9,7 +9,7 @@ import static com.belprime.testTask.util.Constants.WELCOME_PHRASE;
 
 public class MessageProvider {
 
-    public static String[] getMessages() {
+    public static String[] getUserRequests() {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         System.out.println(WELCOME_PHRASE);
         String msgLine = null;

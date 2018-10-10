@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -23,7 +22,7 @@ public final class PageExtractor {
         this.request = request;
     }
 
-    Elements getSearchList() throws IOException {
+    public Elements getSearchList() throws IOException {
         String preparedUrl = SEARCHING_MACHINE + URLEncoder.encode(request, CHARSET);
         final Document document = Jsoup.connect(preparedUrl +
                 "&start=0&num=" + (LINKS_QUANTITY + 5)).userAgent(USER_AGENT)
@@ -32,7 +31,7 @@ public final class PageExtractor {
         return document.select(".g>.r>a");
     }
 
-    static String getUrl(Element link) {
+    private static String getUrl(Element link) {
         String url = link.absUrl("href");
         try {
             url = URLDecoder.decode(url.substring(url.indexOf('=') + 1, url.indexOf('&')), CHARSET);
@@ -49,7 +48,7 @@ public final class PageExtractor {
         return url;
     }
 
-    static String getTitle(String url) {
+    private static String getTitle(String url) {
         String title = "";
         try {
             title = Jsoup.connect(url).userAgent(USER_AGENT)
@@ -61,8 +60,8 @@ public final class PageExtractor {
         return title;
     }
 
-    private static Map<String, String> getItems(Elements links) {
-        final Map<String, String> map = new LinkedHashMap<>();
+    public static ConcurrentHashMap<String, String> getItems(Elements links) {
+        final ConcurrentHashMap<String, String> map = new ConcurrentHashMap<>();
         for (Element link : links) {
             final String url = getUrl(link);
             if (url.isEmpty()) continue;
