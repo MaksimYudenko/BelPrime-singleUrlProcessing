@@ -1,5 +1,6 @@
 package com.belprime.testTask.logic;
 
+import org.apache.log4j.PropertyConfigurator;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
@@ -24,10 +25,12 @@ public class WebSearchService implements Runnable {
         Consumer consumer = new Consumer(queue, map);
         ExecutorService executorService = Executors.newFixedThreadPool(
                 Runtime.getRuntime().availableProcessors());
+        PropertyConfigurator.configure(LOGGER_PROPS);
 
         new Thread(producer).start();
 //
-        for (String message : messages) executorService.execute(consumer);
+        for (int i = 0; i < messages.length; i++)
+            executorService.execute(consumer);
         while (true) {
             if (!isRunning) break;
         }

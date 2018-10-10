@@ -1,5 +1,7 @@
 package com.belprime.testTask.logic;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -17,6 +19,7 @@ import static com.belprime.testTask.util.Constants.*;
 public final class PageExtractor {
 
     private final String request;
+    private static final Logger logger = Logger.getLogger(PageExtractor.class.getName());
 
     public PageExtractor(String request) {
         this.request = request;
@@ -31,31 +34,32 @@ public final class PageExtractor {
         return document.select(".g>.r>a");
     }
 
-    private static String getUrl(Element link) {
+    public static String getUrl(Element link) {
         String url = link.absUrl("href");
         try {
             url = URLDecoder.decode(url.substring(url.indexOf('=') + 1, url.indexOf('&')), CHARSET);
-            if (!url.startsWith(PROTOCOL_NAME))
+            if (!url.startsWith(PROTOCOL_NAME)) {
+                logger.log(Level.ALL, "URL <" + url + "> doesn't start with "
+                        + PROTOCOL_NAME + " and will be ignored.");
                 url = "";
-           /* if (url.contains(IGNORED_SITE)) {
-                System.err.println("http error: status 999 > ignored URL " + url);
+            }
+            if (url.contains(IGNORED_SITE)) {
+                logger.log(Level.ALL, "URL <" + url + "> throws http error: status 999 and will be ignored.");
                 url = "";
-            }*/
+            }
         } catch (UnsupportedEncodingException e) {
-            System.err.println("getUrl() error:");
-            e.printStackTrace();
+            logger.log(Level.ALL, "Exception in getUrl():", e);
         }
         return url;
     }
 
-    private static String getTitle(String url) {
+    public static String getTitle(String url) {
         String title = "";
         try {
             title = Jsoup.connect(url).userAgent(USER_AGENT)
                     .ignoreHttpErrors(true).validateTLSCertificates(false).get().title();
         } catch (IOException e) {
-            System.err.println("getTitle() error:");
-            e.printStackTrace();
+            logger.log(Level.ALL, "Exception in getTitle():", e);
         }
         return title;
     }
@@ -67,7 +71,10 @@ public final class PageExtractor {
             if (url.isEmpty()) continue;
             final String title = getTitle(url);
 //          if we don't require to store an empty titles >
-            if (title.isEmpty()) continue;
+            if (title.isEmpty()) {
+                logger.log(Level.ALL, "URL <" + url + "> has an empty <title> and will be ignored.");
+                continue;
+            }
             map.put(url, title);
             if (map.size() == LINKS_QUANTITY) break;
         }
