@@ -1,7 +1,7 @@
-package com.belprime.testTask;
+package com.belprime.testTaskSingleUrlProcessing;
 
-import com.belprime.testTask.logic.WebSearchService;
-import com.belprime.testTask.util.MessageProvider;
+import com.belprime.testTaskSingleUrlProcessing.logic.WebSearchService;
+import com.belprime.testTaskSingleUrlProcessing.util.MessageProvider;
 
 public class MainRunner {
 
