@@ -1,4 +1,4 @@
-package com.belprime.testTaskSingleUrlProcessing.logic;
+package com.belprime.testTask.logic;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -8,7 +8,7 @@ import org.jsoup.nodes.Element;
 import java.util.List;
 import java.util.concurrent.*;
 
-import static com.belprime.testTaskSingleUrlProcessing.util.Constants.*;
+import static com.belprime.testTask.util.Constants.*;
 
 public class WebSearchService implements Runnable {
 
@@ -16,7 +16,6 @@ public class WebSearchService implements Runnable {
     static volatile boolean isRunning = true;
     private ConcurrentHashMap<String, String> map = new ConcurrentHashMap<>();
     private static final Logger logger = Logger.getLogger(WebSearchService.class.getName());
-
 
     public WebSearchService(String[] messages) {
         this.messages = messages;
@@ -98,11 +97,11 @@ class Consumer implements Runnable {
             while (WebSearchService.isRunning) {
                 String url = queue.poll(POLL_TIMEOUT, TimeUnit.SECONDS);
                 assert url != null;
-                if (url.isEmpty()) continue;
                 if (url.equalsIgnoreCase("done")) {
                     WebSearchService.isRunning = false;
                     continue;
                 }
+                if (url.isEmpty()) continue;
                 if (map.size() == LINKS_QUANTITY) break;
                 map.put(url, PageExtractor.getTitle(url));
             }

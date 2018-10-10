@@ -1,7 +1,9 @@
-### Web-searching 
+### Web-searching [single url processing]
 
-- submit request
+- submit request (any number of phrases)
 
-- seek 10 URLs from searching list
+- request splits by (more than one whitespace/tab) . , ; ! ? /
+
+- seek 10 URLs from searching list (sets up in Constants)
 
 - display URL and web page title

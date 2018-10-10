@@ -1,11 +1,11 @@
-package com.belprime.testTaskSingleUrlProcessing.util;
+package com.belprime.testTask.util;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import static com.belprime.testTaskSingleUrlProcessing.util.Constants.REGEX;
-import static com.belprime.testTaskSingleUrlProcessing.util.Constants.WELCOME_PHRASE;
+import static com.belprime.testTask.util.Constants.REGEX;
+import static com.belprime.testTask.util.Constants.WELCOME_PHRASE;
 
 public class MessageProvider {
 

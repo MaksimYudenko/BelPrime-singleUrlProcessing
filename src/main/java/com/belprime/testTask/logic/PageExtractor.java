@@ -1,4 +1,4 @@
-package com.belprime.testTaskSingleUrlProcessing.logic;
+package com.belprime.testTask.logic;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -13,10 +13,9 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.belprime.testTaskSingleUrlProcessing.util.Constants.*;
+import static com.belprime.testTask.util.Constants.*;
 
 public final class PageExtractor {
 
@@ -85,9 +84,7 @@ public final class PageExtractor {
     }
 
     public static void displayItems(ConcurrentHashMap<String, String> map) {
-        for (Map.Entry<String, String> entry : map.entrySet()) {
-            System.out.printf("URL %s \tTITLE %s\n", entry.getKey(), entry.getValue());
-        }
+        map.forEach((k, v) -> System.out.printf("URL %s \tTITLE %s\n", k, v));
     }
 
 }
